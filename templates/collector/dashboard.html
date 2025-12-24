@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Collector Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="header-logo" alt="Logo">
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </header>
+
+    <h2>Collector Dashboard</h2>
+
+    <div class="section">
+        <h3>Approved Loans to Collect</h3>
+        <table class="table">
+            <tr><th>ID</th><th>Client</th><th>Amount</th><th>Status</th><th>Collect</th></tr>
+
+            {% for loan in loans %}
+                {% if loan.status == 'approved' %}
+                <tr>
+                    <td>{{ loan.id }}</td>
+                    <td>{{ loan.client }}</td>
+                    <td>{{ loan.amount }}</td>
+                    <td>{{ loan.status }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('collect_loan', id=loan.id) }}">
+                            <button type="submit">Collect</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+</body>
+</html>

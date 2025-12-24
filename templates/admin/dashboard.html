@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" class="header-logo" alt="Logo">
+        <img src="{{ url_for('static', filename='images/banner.png') }}" class="header-banner" alt="Banner">
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </header>
+
+    <h2>Admin Dashboard</h2>
+
+    <div class="section">
+        <h3>Create New Loan</h3>
+        <form method="POST" action="{{ url_for('create_loan') }}">
+            <input type="text" name="client" placeholder="Client Username" required>
+            <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+            <button type="submit">Create Loan</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>Existing Loans</h3>
+        <table class="table">
+            <tr>
+                <th>ID</th><th>Client</th><th>Amount</th><th>Interest</th><th>Penalty</th><th>Date</th><th>Status</th><th>Actions</th>
+            </tr>
+
+            {% for loan in loans %}
+            <tr>
+                <td>{{ loan.id }}</td>
+                <td>{{ loan.client }}</td>
+                <td>{{ loan.amount }}</td>
+                <td>{{ loan.interest }}</td>
+                <td>{{ loan.penalty }}</td>
+                <td>{{ loan.date }}</td>
+                <td>{{ loan.status }}</td>
+                <td>
+                    {% if loan.status == 'pending' %}
+                    <form class="inline-form" method="POST" action="{{ url_for('approve_loan', id=loan.id) }}">
+                        <input type="password" name="pin" placeholder="Admin PIN" required>
+                        <button type="submit">Approve</button>
+                    </form>
+                    {% endif %}
+                    <form class="inline-form" method="GET" action="{{ url_for('send_whatsapp', id=loan.id) }}">
+                        <button type="submit">Send Reminder</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <form method="GET" action="{{ url_for('export_csv') }}">
+            <button type="submit">Export CSV</button>
+        </form>
+    </div>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+</body>
+</html>

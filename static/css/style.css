@@ -1,0 +1,200 @@
+/* --- Global --- */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+}
+
+h2, h3 {
+    color: #333;
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* --- Login Page --- */
+.login-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 300px;
+}
+
+.login-logo {
+    width: 150px;
+    margin-bottom: 20px;
+}
+
+.login-container input {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.login-container button {
+    width: 95%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.login-container button:hover {
+    background-color: #0056b3;
+}
+
+.login-messages {
+    color: red;
+    list-style: none;
+    padding: 0;
+}
+
+/* --- Header --- */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #007bff;
+    padding: 10px 20px;
+    color: #fff;
+}
+
+.header-logo {
+    height: 50px;
+}
+
+.header-banner {
+    height: 60px;
+}
+
+.logout-btn {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    background-color: #ff4d4f;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+.logout-btn:hover {
+    background-color: #d9363e;
+}
+
+/* --- Sections --- */
+.section {
+    background-color: #fff;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+/* --- Forms --- */
+form input {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+form button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: #fff;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #218838;
+}
+
+.inline-form {
+    display: inline-block;
+}
+
+/* --- Tables --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table th, table td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
+
+table th {
+    background-color: #007bff;
+    color: #fff;
+}
+
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+/* --- Buttons inside table --- */
+table button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+table button:hover {
+    opacity: 0.8;
+}
+
+table .approve-btn {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+table .collect-btn {
+    background-color: #ffc107;
+    color: #fff;
+}
+
+table .whatsapp-btn {
+    background-color: #25d366;
+    color: #fff;
+}
+
+table .export-btn {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* --- Responsive --- */
+@media screen and (max-width: 768px) {
+    .section {
+        width: 95%;
+    }
+
+    .header {
+        flex-direction: column;
+    }
+
+    .header-banner {
+        margin-top: 10px;
+    }
+}

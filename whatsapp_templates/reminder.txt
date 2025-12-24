@@ -1,0 +1,1 @@
+Hello {client}, this is a reminder to pay your loan of {amount} by {due_date}. Thank you!
