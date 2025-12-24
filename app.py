@@ -1,117 +1,204 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from datetime import datetime, timedelta
-import csv, os
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+import csv
+from io import StringIO
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
+app.secret_key = "azarsecret"
 
-# --- In-memory demo storage ---
-users = [
-    {'username':'admin','role':'admin','pin':'1234'},
-    {'username':'collector1','role':'collector','pin':'0000'},
-    {'username':'client1','role':'client','pin':'0000'}
+# --------------------------
+# Sample users (for testing)
+# --------------------------
+users = {
+    "admin": {"role": "admin", "pin": "1234"},
+    "collector1": {"role": "collector", "pin": "0000"},
+    "client1": {"role": "client", "pin": "0000"}
+}
+
+# --------------------------
+# Sample loan data
+# --------------------------
+loans = [
+    {"id": 1, "client": "client1", "amount": 50000, "interest": 3000, "penalty": 0, "date": "2025-12-24", "status": "pending"},
+    {"id": 2, "client": "client1", "amount": 40000, "interest": 2400, "penalty": 0, "date": "2025-12-22", "status": "approved"}
 ]
-loans = []
 
-# --- Login ---
-@app.route('/', methods=['GET','POST'])
+loan_id_counter = 3
+
+# --------------------------
+# Login route
+# --------------------------
+@app.route("/", methods=["GET", "POST"])
 def login():
-    if request.method=='POST':
-        username=request.form.get('username')
-        pin=request.form.get('pin')
-        user=next((u for u in users if u['username']==username and u['pin']==pin), None)
-        if user:
-            session['user']=user
-            role=user['role']
-            if role=='admin': return redirect(url_for('admin_dashboard'))
-            if role=='collector': return redirect(url_for('collector_dashboard'))
-            if role=='client': return redirect(url_for('client_dashboard'))
-        flash('Invalid credentials')
-    return render_template('login.html')
+    if request.method == "POST":
+        username = request.form.get("username")
+        pin = request.form.get("pin")
+        user = users.get(username)
+        if user and user["pin"] == pin:
+            session["username"] = username
+            session["role"] = user["role"]
+            flash("Login successful!")
 
-# --- Admin routes ---
-@app.route('/admin')
-def admin_dashboard():
-    return render_template('admin/dashboard.html', loans=loans)
-
-@app.route('/create_loan', methods=['POST'])
-def create_loan():
-    client=request.form.get('client')
-    amount=float(request.form.get('amount'))
-    loan={'id':len(loans)+1,'client':client,'amount':amount,'date':datetime.now(),'status':'pending','interest':amount*0.1,'penalty':0}
-    loans.append(loan)
-    flash('Loan created')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/approve_loan/<int:id>', methods=['POST'])
-def approve_loan(id):
-    pin=request.form.get('pin')
-    if session.get('user',{}).get('pin')!=pin:
-        flash('Invalid PIN')
-        return redirect(url_for('admin_dashboard'))
-    loan=next((l for l in loans if l['id']==id), None)
-    if loan: loan['status']='approved'
-    flash('Loan approved')
-    return redirect(url_for('admin_dashboard'))
-
-# --- Collector routes ---
-@app.route('/collector')
-def collector_dashboard():
-    return render_template('collector/dashboard.html', loans=loans)
-
-@app.route('/collect_loan/<int:id>', methods=['POST'])
-def collect_loan(id):
-    loan=next((l for l in loans if l['id']==id), None)
-    if loan: loan['status']='collected'
-    flash('Loan collected')
-    return redirect(url_for('collector_dashboard'))
-
-# --- Client routes ---
-@app.route('/client')
-def client_dashboard():
-    user=session.get('user', {})
-    user_loans=[l for l in loans if l.get('client')==user.get('username')]
-    return render_template('client/dashboard.html', loans=user_loans)
-
-@app.route('/ussd_request', methods=['POST'])
-def ussd_request():
-    client=session.get('user',{}).get('username')
-    amount=float(request.form.get('amount'))
-    loan={'id':len(loans)+1,'client':client,'amount':amount,'date':datetime.now(),'status':'pending','interest':amount*0.1,'penalty':0}
-    loans.append(loan)
-    flash(f'USSD loan request of {amount} submitted!')
-    return redirect(url_for('client_dashboard'))
-
-# --- WhatsApp reminder simulation ---
-@app.route('/send_whatsapp/<int:id>')
-def send_whatsapp(id):
-    loan=next((l for l in loans if l['id']==id), None)
-    if loan:
-        template_file=os.path.join('whatsapp_templates','reminder.txt')
-        if os.path.exists(template_file):
-            with open(template_file,'r') as f:
-                template=f.read()
-            message=template.replace('{client}',loan['client']).replace('{amount}',str(loan['amount'])).replace('{due_date}',str(loan['date']+timedelta(days=7)))
+            if user["role"] == "admin":
+                return redirect(url_for("admin_dashboard"))
+            elif user["role"] == "collector":
+                return redirect(url_for("collector_dashboard"))
+            else:
+                return redirect(url_for("client_dashboard"))
         else:
-            message=f"Reminder to {loan['client']}: Pay {loan['amount']} by {loan['date']+timedelta(days=7)}"
-        print('WhatsApp message simulated:', message)
-        flash('WhatsApp reminder sent (simulated)')
-    return redirect(url_for('admin_dashboard'))
+            flash("Invalid username or PIN")
+            return redirect(url_for("login"))
 
-# --- Export CSV ---
-@app.route('/export_csv')
+    return render_template("login.html")
+
+# --------------------------
+# Logout
+# --------------------------
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully")
+    return redirect(url_for("login"))
+
+# --------------------------
+# Admin Dashboard
+# --------------------------
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if session.get("role") != "admin":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    return render_template("admin/dashboard.html", loans=loans)
+
+# --------------------------
+# Collector Dashboard
+# --------------------------
+@app.route("/collector/dashboard")
+def collector_dashboard():
+    if session.get("role") != "collector":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    # Collector sees only approved loans
+    collector_loans = [loan for loan in loans if loan["status"] == "approved"]
+    return render_template("collector/dashboard.html", loans=collector_loans)
+
+# --------------------------
+# Client Dashboard
+# --------------------------
+@app.route("/client/dashboard")
+def client_dashboard():
+    if session.get("role") != "client":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    client_loans = [loan for loan in loans if loan["client"] == session["username"]]
+    return render_template("client/dashboard.html", loans=client_loans)
+
+# --------------------------
+# Create loan (Admin)
+# --------------------------
+@app.route("/create_loan", methods=["POST"])
+def create_loan():
+    global loan_id_counter
+    if session.get("role") != "admin":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+
+    client_name = request.form.get("client")
+    amount = int(request.form.get("amount"))
+    interest = int(request.form.get("interest"))
+    loans.append({
+        "id": loan_id_counter,
+        "client": client_name,
+        "amount": amount,
+        "interest": interest,
+        "penalty": 0,
+        "date": "2025-12-24",
+        "status": "pending"
+    })
+    loan_id_counter += 1
+    flash("Loan created successfully!")
+    return redirect(url_for("admin_dashboard"))
+
+# --------------------------
+# Approve loan (Admin)
+# --------------------------
+@app.route("/approve_loan/<int:id>", methods=["POST"])
+def approve_loan(id):
+    if session.get("role") != "admin":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    for loan in loans:
+        if loan["id"] == id:
+            loan["status"] = "approved"
+            flash(f"Loan {id} approved!")
+            break
+    return redirect(url_for("admin_dashboard"))
+
+# --------------------------
+# Collect loan (Collector)
+# --------------------------
+@app.route("/collect_loan/<int:id>", methods=["POST"])
+def collect_loan(id):
+    if session.get("role") != "collector":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    for loan in loans:
+        if loan["id"] == id and loan["status"] == "approved":
+            loan["status"] = "collected"
+            flash(f"Loan {id} collected!")
+            break
+    return redirect(url_for("collector_dashboard"))
+
+# --------------------------
+# USSD loan request (Client)
+# --------------------------
+@app.route("/ussd_request", methods=["POST"])
+def ussd_request():
+    if session.get("role") != "client":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    amount = int(request.form.get("amount"))
+    loans.append({
+        "id": global loan_id_counter,
+        "client": session["username"],
+        "amount": amount,
+        "interest": int(amount*0.06),
+        "penalty": 0,
+        "date": "2025-12-24",
+        "status": "pending"
+    })
+    loan_id_counter += 1
+    flash("USSD loan request submitted!")
+    return redirect(url_for("client_dashboard"))
+
+# --------------------------
+# WhatsApp reminder (simulate)
+# --------------------------
+@app.route("/send_whatsapp/<int:id>")
+def send_whatsapp(id):
+    if session.get("role") != "admin":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    flash(f"WhatsApp reminder sent for loan {id} (simulated)!")
+    return redirect(url_for("admin_dashboard"))
+
+# --------------------------
+# Export CSV (Admin)
+# --------------------------
+@app.route("/export_csv")
 def export_csv():
-    path='loans_export.csv'
-    with open(path,'w',newline='') as f:
-        w=csv.writer(f)
-        w.writerow(['ID','Client','Amount','Interest','Penalty','Date','Status'])
-        for l in loans:
-            w.writerow([l['id'],l['client'],l['amount'],l['interest'],l['penalty'],l['date'],l['status']])
-    flash('CSV exported')
-    return redirect(url_for('admin_dashboard'))
+    if session.get("role") != "admin":
+        flash("Unauthorized")
+        return redirect(url_for("login"))
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(["ID","Client","Amount","Interest","Penalty","Date","Status"])
+    for loan in loans:
+        cw.writerow([loan["id"],loan["client"],loan["amount"],loan["interest"],loan["penalty"],loan["date"],loan["status"]])
+    output = si.getvalue()
+    return send_file(StringIO(output), mimetype="text/csv", as_attachment=True, download_name="loans.csv")
 
-# --- Run server ---
-if __name__=='__main__':
-    # Use PORT environment variable if present (Render requirement)
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+# --------------------------
+# Run App
+# --------------------------
+if __name__ == "__main__":
+    app.run(debug=True)
