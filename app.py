@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "azarsecret"
 
 # --------------------------
-# Sample users (for testing)
+# Sample users
 # --------------------------
 users = {
     "admin": {"role": "admin", "pin": "1234"},
@@ -77,7 +77,6 @@ def collector_dashboard():
     if session.get("role") != "collector":
         flash("Unauthorized")
         return redirect(url_for("login"))
-    # Collector sees only approved loans
     collector_loans = [loan for loan in loans if loan["status"] == "approved"]
     return render_template("collector/dashboard.html", loans=collector_loans)
 
@@ -153,12 +152,14 @@ def collect_loan(id):
 # --------------------------
 @app.route("/ussd_request", methods=["POST"])
 def ussd_request():
+    global loan_id_counter
     if session.get("role") != "client":
         flash("Unauthorized")
         return redirect(url_for("login"))
+
     amount = int(request.form.get("amount"))
     loans.append({
-        "id": global loan_id_counter,
+        "id": loan_id_counter,
         "client": session["username"],
         "amount": amount,
         "interest": int(amount*0.06),
@@ -189,6 +190,7 @@ def export_csv():
     if session.get("role") != "admin":
         flash("Unauthorized")
         return redirect(url_for("login"))
+
     si = StringIO()
     cw = csv.writer(si)
     cw.writerow(["ID","Client","Amount","Interest","Penalty","Date","Status"])
