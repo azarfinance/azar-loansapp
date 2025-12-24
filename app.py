@@ -6,12 +6,12 @@ app = Flask(__name__)
 app.secret_key = "azarsecret"
 
 # --------------------------
-# Sample users
+# Users dictionary
 # --------------------------
 users = {
     "admin": {"role": "admin", "pin": "1234"},
     "collector1": {"role": "collector", "pin": "0000"},
-    "client1": {"role": "client", "pin": "0000"}
+    "client1": {"role": "client", "pin": "0000", "full_name": "Client One", "email": "client1@mail.com", "phone": "0700000000", "id_number": "A1234567"}
 }
 
 # --------------------------
@@ -49,6 +49,38 @@ def login():
             return redirect(url_for("login"))
 
     return render_template("login.html")
+
+# --------------------------
+# Signup route
+# --------------------------
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    global users
+    if request.method == "POST":
+        full_name = request.form.get("full_name")
+        email = request.form.get("email")
+        phone = request.form.get("phone")
+        id_number = request.form.get("id_number")
+        username = request.form.get("username")
+        pin = request.form.get("pin")
+
+        if username in users:
+            flash("Username already exists. Choose another.")
+            return redirect(url_for("signup"))
+
+        users[username] = {
+            "role": "client",
+            "pin": pin,
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "id_number": id_number
+        }
+
+        flash("Signup successful! Please log in.")
+        return redirect(url_for("login"))
+
+    return render_template("signup.html")
 
 # --------------------------
 # Logout

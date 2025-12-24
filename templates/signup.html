@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Client Signup - Azar Finance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Azar Finance - Client Signup</h1>
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height:60px;">
+    </header>
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul style="color:red;">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('signup') }}">
+            <h2>Personal Information</h2>
+            <label>Full Name:</label>
+            <input type="text" name="full_name" required>
+            
+            <label>Email:</label>
+            <input type="email" name="email" required>
+
+            <label>Phone Number:</label>
+            <input type="tel" name="phone" required>
+
+            <label>National ID / Passport Number:</label>
+            <input type="text" name="id_number" required>
+
+            <h2>Account Credentials</h2>
+            <label>Username:</label>
+            <input type="text" name="username" required>
+
+            <label>PIN (4 digits):</label>
+            <input type="password" name="pin" pattern="\d{4}" title="4 digit PIN" required>
+
+            <button type="submit">Sign Up</button>
+        </form>
+        <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+    </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
